@@ -53,15 +53,13 @@ def get_bounds(json_path):
         elements = json.load(f)['activity']['root']['children']
     bounds = []
     for elem in elements:
-        if elem is None:
-            continue
-        if 'children' in elem:
-            elements.extend(elem['children'])
-        if elem['clickable'] == True:
-            bound = elem['bounds']
-            if (bound[2] > info_size[0] or bound[3] > info_size[1] or bound[0] >= bound[2] or bound[1] >= bound[3]):
-                continue
-            bounds.append(bound)
+        if elem is not None:
+            if 'children' in elem:
+                elements.extend(elem['children'])
+            if elem['clickable'] == True:
+                bound = elem['bounds']
+                if bound[0] < bound[2] <= info_size[0] and bound[1] < bound[3] <= info_size[1]:
+                    bounds.append(bound)
     return bounds
 
 def draw_bounds(limit):
@@ -78,7 +76,7 @@ def draw_bounds(limit):
             bound[1] = round(bound[1] / info_size[1] * im_size[1])
             bound[2] = round(bound[2] / info_size[0] * im_size[0])
             bound[3] = round(bound[3] / info_size[1] * im_size[1])
-            im_dr.rectangle(bound, outline='red', width=8)
+            im_dr.rectangle(bound, outline='red', width=7)
         i = str(im_path).split('/')[-1].split('.jpg')[0]
         im.save(f'{args.output_dir}/{i}_with_bounds.jpg')
 
