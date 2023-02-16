@@ -7,7 +7,7 @@ import imagesize
 import itertools
 
 parser = argparse.ArgumentParser(description='Rico Intro Task')
-parser.add_argument('task_num', type=int, choices=[1, 2, 3, 4], help='Task number')
+parser.add_argument('task_num', type=int, choices=[1, 2, 3, 4, 5], help='Task number')
 parser.add_argument('input_dir', type=str, help='Input directory')
 parser.add_argument('-l', '--limit', type=int, help='Limit for task 3')
 parser.add_argument('-o', '--output_dir', type=str, help='Output directory for task 3')
@@ -90,11 +90,37 @@ def draw_histogram():
         bounds = get_bounds(path)
         for bound in bounds:
             area_ratios.append((bound[2] - bound[0]) * (bound[3] - bound[1]) / (info_size[0] * info_size[1]))
-    _, ax = plt.subplots(1, 1)
-    ax.hist(area_ratios, bins=25, rwidth=0.5)
-    ax.set_title("Clickable elements size distribution")
-    ax.set_xlabel('Ratio of the clickable element area to the screen area')
-    plt.savefig('hist.png')
+
+    _, ax1 = plt.subplots(1, 1)
+    ax1.hist(area_ratios, bins=50, rwidth=0.8)
+    ax1.set_title("Clickable elements size distribution")
+    ax1.set_xlabel('Propotion of the clickable element area to the screen area')
+    plt.savefig('hist1.png')
+
+    _, ax2 = plt.subplots(1, 1)
+    ax2.hist(area_ratios, range=[0, 0.1], bins=50, rwidth=0.8)
+    ax2.set_title("Clickable elements size distribution (0-10%)")
+    ax2.set_xlabel('Propotion of the clickable element area to the screen area')
+    plt.savefig('hist2.png')
+
+def draw_bounds_with_large_propotion():
+    img_paths = itertools.islice(Path(dir_path).glob('*.jpg'), 10)
+    for im_path in img_paths:
+        json_path = str(im_path).split('.jpg')[0] + '.json'
+        bounds = get_bounds(json_path)
+        im = Image.open(im_path)
+        w, h = im.size
+        im_size = (w, h) if w < h else (h, w)
+        im_dr = ImageDraw.Draw(im)
+        for bound in bounds:
+            if (bound[2] - bound[0]) * (bound[3] - bound[1]) / (info_size[0] * info_size[1]) >= 0.8:
+                bound[0] = round(bound[0] / info_size[0] * im_size[0])
+                bound[1] = round(bound[1] / info_size[1] * im_size[1])
+                bound[2] = round(bound[2] / info_size[0] * im_size[0])
+                bound[3] = round(bound[3] / info_size[1] * im_size[1])
+                im_dr.rectangle(bound, outline='red', width=8)
+        i = str(im_path).split('/')[-1].split('.jpg')[0]
+        im.save(f'{args.output_dir}/{i}_large_propotion.jpg')
 
 
 if args.task_num == 1:
@@ -106,5 +132,7 @@ elif args.task_num == 2:
     print(n)
 elif args.task_num == 3:
     draw_bounds(args.limit)
-else:
+elif args.task_num == 4:
     draw_histogram()
+else:
+    draw_bounds_with_large_propotion()
